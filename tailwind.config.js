@@ -6,6 +6,7 @@ export default {
         base: "#F5F1E8",        // warm off-white background
         surface: "#FFFFFF",     // card background
         ink: "#1A1A1A",         // near-black text/borders
+        subcopy: "#1F3D2B",     // dark forest green / dark-green-gray for intentional secondary text
         accent: "#16A34A",      // single bold accent — fresh produce green
         accentSoft: "#DCFCE7",  // accent tint for badges/backgrounds
         sage: "#A8B89A",        // secondary earthy tone (freshness, not competing with accent)
