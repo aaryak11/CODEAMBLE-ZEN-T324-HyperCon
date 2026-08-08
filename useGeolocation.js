@@ -30,14 +30,14 @@ export function useGeolocation(fallbackLocation = { lat: 19.2183, lng: 73.0864, 
     }
 
     setStatus("prompt");
+    setErrorMsg("");
 
     const handleSuccess = (position) => {
       const now = Date.now();
       const newLat = position.coords.latitude;
       const newLng = position.coords.longitude;
 
-      // Debounce updates: update at most every 5 seconds unless initial grant
-      if (now - lastUpdateRef.current < 5000 && coords) {
+      if (now - lastUpdateRef.current < 2000 && coords) {
         return;
       }
       lastUpdateRef.current = now;
@@ -47,28 +47,36 @@ export function useGeolocation(fallbackLocation = { lat: 19.2183, lng: 73.0864, 
         lng: newLng,
         accuracy: position.coords.accuracy,
         isLiveDevice: true,
+        label: `Current Location (${newLat.toFixed(3)}, ${newLng.toFixed(3)})`,
       });
       setStatus("granted");
       setErrorMsg("");
     };
 
     const handleError = (err) => {
-      console.warn("Geolocation permission/fetch error:", err.message);
+      console.warn("Geolocation permission/fetch error:", err.code, err.message);
       setStatus("denied");
-      setErrorMsg(err.message || "Location permission denied.");
+      let msg = "Location permission denied.";
+      if (err.code === 1) {
+        msg = "Location permission denied. Please allow location access in browser settings.";
+      } else if (err.code === 2) {
+        msg = "Position unavailable. Please check GPS settings.";
+      } else if (err.code === 3) {
+        msg = "Location request timed out. Using default delivery location.";
+      }
+      setErrorMsg(msg);
     };
 
-    // First try fast current position
+    // Use maximumAge: 0 to get fresh real position
     navigator.geolocation.getCurrentPosition(handleSuccess, handleError, {
       enableHighAccuracy: true,
-      timeout: 8000,
-      maximumAge: 10000,
+      timeout: 10000,
+      maximumAge: 0,
     });
 
-    // Then set watchPosition for continuous live update
     const watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, {
       enableHighAccuracy: true,
-      timeout: 10000,
+      timeout: 12000,
       maximumAge: 5000,
     });
 
@@ -77,7 +85,6 @@ export function useGeolocation(fallbackLocation = { lat: 19.2183, lng: 73.0864, 
     };
   }, [coords]);
 
-  // Attempt location request on mount
   useEffect(() => {
     const cleanup = requestLocation();
     return () => {
@@ -89,7 +96,7 @@ export function useGeolocation(fallbackLocation = { lat: 19.2183, lng: 73.0864, 
     ? {
         lat: coords.lat,
         lng: coords.lng,
-        label: "Current Device Location",
+        label: coords.label || "Current GPS Location",
         isLiveDevice: true,
       }
     : fallbackLocation;

@@ -54,6 +54,7 @@ export default function HomeView() {
   const [stores, setStores] = useState(PARTNER_STORES_25);
   const [loadingStores, setLoadingStores] = useState(false);
   const [activeModalStoreId, setActiveModalStoreId] = useState(null);
+  const [activeModalProduct, setActiveModalProduct] = useState(null);
 
   // Filter & Pagination state for Stores
   const [storeStatusFilter, setStoreStatusFilter] = useState("all"); // 'all' | 'active' | 'nearby'
@@ -140,7 +141,7 @@ export default function HomeView() {
             </span>
           </h1>
 
-          <p className="text-sm sm:text-base text-ink font-semibold leading-relaxed max-w-xl">
+          <p className="text-sm sm:text-base text-subcopy font-semibold leading-relaxed max-w-xl">
             HyperCon connects you directly to live camera feeds on local grocery store shelves. Inspect produce freshness and actual stock levels before paying.
           </p>
 
@@ -193,7 +194,7 @@ export default function HomeView() {
             <h2 className="text-2xl font-display font-extrabold text-ink tracking-tight">
               Browse Categories
             </h2>
-            <p className="text-xs text-ink font-semibold">
+            <p className="text-xs text-subcopy font-semibold">
               Filter live shelf inventory by perishable department
             </p>
           </div>
@@ -239,7 +240,7 @@ export default function HomeView() {
                 {filteredItems.length} Products
               </span>
             </h2>
-            <p className="text-xs text-ink font-semibold">
+            <p className="text-xs text-subcopy font-semibold">
               Items currently available in nearby partner stores with shelf camera feeds
             </p>
           </div>
@@ -302,32 +303,44 @@ export default function HomeView() {
                     </div>
                   </div>
 
-                  <p className="text-xs text-ink font-semibold">{item.storeName}</p>
+                  <p className="text-xs text-subcopy font-semibold">{item.storeName}</p>
                 </div>
               </div>
 
-              {/* Price & Add to Cart Button */}
-              <div className="pt-3 border-t-2 border-ink/10 flex items-center justify-between mt-3">
+              {/* Price & Action Buttons (Live View + Add to Cart) */}
+              <div className="pt-3 border-t-2 border-ink/10 flex items-center justify-between mt-3 gap-2">
                 <div>
-                  <span className="text-xs text-ink/70 line-through font-mono mr-1">₹{item.originalPrice}</span>
+                  <span className="text-xs text-subcopy line-through font-mono mr-1">₹{item.originalPrice}</span>
                   <span className="text-lg font-extrabold font-display text-ink">₹{item.price}</span>
                 </div>
 
-                <button
-                  onClick={() => addToCart({
-                    productId: item.id,
-                    productName: item.name,
-                    price: item.price,
-                    unit: item.unit,
-                    storeName: item.storeName,
-                    imageUrl: item.imageUrl,
-                    hasLiveVerification: true
-                  })}
-                  className="px-3 py-1.5 bg-accent hover:bg-accent/90 text-surface rounded-md text-xs font-extrabold font-display border-2 border-ink shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition flex items-center gap-1 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                  <span>Add to Cart</span>
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setActiveModalProduct(item)}
+                    className="px-2.5 py-1.5 bg-surface hover:bg-red-50 text-ink rounded-md text-xs font-extrabold font-display border-2 border-ink shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition flex items-center gap-1 cursor-pointer"
+                    title="Watch live shelf camera for this item"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse shrink-0" />
+                    <Video className="w-3.5 h-3.5 text-ink" />
+                    <span className="hidden sm:inline">Live View</span>
+                  </button>
+
+                  <button
+                    onClick={() => addToCart({
+                      productId: item.id,
+                      productName: item.name,
+                      price: item.price,
+                      unit: item.unit,
+                      storeName: item.storeName,
+                      imageUrl: item.imageUrl,
+                      hasLiveVerification: true
+                    })}
+                    className="px-3 py-1.5 bg-accent hover:bg-accent/90 text-surface rounded-md text-xs font-extrabold font-display border-2 border-ink shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition flex items-center gap-1 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span>Add to Cart</span>
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -363,7 +376,7 @@ export default function HomeView() {
           <h2 className="text-2xl font-display font-extrabold text-ink">
             How HyperCon Live Verification Works
           </h2>
-          <p className="text-xs text-ink font-semibold">
+          <p className="text-xs text-subcopy font-semibold">
             3 simple steps to guarantee freshness before your purchase
           </p>
         </div>
@@ -374,7 +387,7 @@ export default function HomeView() {
               01
             </div>
             <h3 className="font-extrabold font-display text-base text-ink">Search Local Stores</h3>
-            <p className="text-xs text-ink font-semibold leading-relaxed">
+            <p className="text-xs text-subcopy font-semibold leading-relaxed">
               Browse 25+ partner stores around your location and compare prices across products.
             </p>
           </div>
@@ -387,7 +400,7 @@ export default function HomeView() {
               <span>Inspect Shelf Feed Live</span>
               <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
             </h3>
-            <p className="text-xs text-ink font-semibold leading-relaxed">
+            <p className="text-xs text-subcopy font-semibold leading-relaxed">
               Stream live RTSP/HLS camera feeds directly from the store shelf to check stock & freshness.
             </p>
           </div>
@@ -397,7 +410,7 @@ export default function HomeView() {
               03
             </div>
             <h3 className="font-extrabold font-display text-base text-ink">Guaranteed Fresh Delivery</h3>
-            <p className="text-xs text-ink font-semibold leading-relaxed">
+            <p className="text-xs text-subcopy font-semibold leading-relaxed">
               Place your order with confidence — zero discrepancy between what you inspect and what arrives.
             </p>
           </div>
@@ -414,7 +427,7 @@ export default function HomeView() {
                 {sortedStores.length} Stores Total
               </span>
             </h2>
-            <p className="text-xs text-ink font-semibold">
+            <p className="text-xs text-subcopy font-semibold">
               Stores streaming real-time shelf inventory directly to your device
             </p>
           </div>
@@ -462,8 +475,9 @@ export default function HomeView() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {paginatedStores.map((store) => {
-              const isOffline = store.feedStatus === "offline";
-              const isDelayed = store.feedStatus === "delayed";
+              const isOffline = store.feedStatus === "offline" || store.feedReliability === "offline";
+              const isDelayed = store.feedStatus === "delayed" || store.feedReliability === "unreliable";
+              const reliability = store.feedReliability || (isOffline ? "offline" : isDelayed ? "unreliable" : "verified");
 
               return (
                 <div
@@ -482,7 +496,7 @@ export default function HomeView() {
                           {store.distanceKm} km
                         </span>
                       </div>
-                      <p className="text-xs text-ink font-semibold line-clamp-1 mt-0.5">{store.address}</p>
+                      <p className="text-xs text-subcopy font-semibold line-clamp-1 mt-0.5">{store.address}</p>
                     </div>
 
                     {/* Meta: Star Rating (Plain text) & Status */}
@@ -496,20 +510,20 @@ export default function HomeView() {
 
                       {/* Live Feed Status Dot */}
                       <div className="flex items-center gap-1.5 text-[11px] font-extrabold">
-                        {isOffline ? (
+                        {reliability === "offline" ? (
                           <span className="flex items-center gap-1 text-red-700 font-mono">
                             <span className="w-2 h-2 rounded-full bg-red-600"></span>
-                            <span>OFFLINE</span>
+                            <span>FEED OFFLINE</span>
                           </span>
-                        ) : isDelayed ? (
+                        ) : reliability === "unreliable" ? (
                           <span className="flex items-center gap-1 text-amber-800 font-mono">
-                            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                            <span>DELAYED</span>
+                            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                            <span>FEED UNVERIFIED</span>
                           </span>
                         ) : (
                           <span className="flex items-center gap-1 text-accent font-mono">
                             <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
-                            <span>LIVE</span>
+                            <span>VERIFIED FRESH</span>
                           </span>
                         )}
                       </div>
@@ -519,19 +533,30 @@ export default function HomeView() {
                   {/* SIGNATURE ACTION BUTTON */}
                   <div className="pt-4 border-t-2 border-ink/10 mt-3">
                     <button
-                      onClick={() => !isOffline && setActiveModalStoreId(store._id)}
-                      disabled={isOffline}
+                      onClick={() => reliability !== "offline" && setActiveModalStoreId(store._id)}
+                      disabled={reliability === "offline"}
                       className={`w-full py-2.5 px-3 rounded-lg text-xs font-extrabold font-display border-2 border-ink shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none flex items-center justify-center gap-2 transition cursor-pointer ${
-                        isOffline
-                          ? "bg-gray-100 text-gray-400 border-gray-300 shadow-none cursor-not-allowed"
+                        reliability === "offline"
+                          ? "bg-gray-100 text-gray-500 border-gray-400 shadow-none cursor-not-allowed"
+                          : reliability === "unreliable"
+                          ? "bg-amber-100 hover:bg-amber-200 text-amber-950 border-amber-700"
                           : "bg-accent hover:bg-accent/90 text-surface"
                       }`}
                     >
-                      {!isOffline && (
+                      {reliability === "verified" && (
                         <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
                       )}
+                      {reliability === "unreliable" && (
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                      )}
                       <Video className="w-4 h-4" />
-                      <span>{isOffline ? "Feed Offline" : "Watch Camera Feed"}</span>
+                      <span>
+                        {reliability === "offline"
+                          ? "Feed Offline"
+                          : reliability === "unreliable"
+                          ? "Watch Unverified Feed"
+                          : "Watch Camera Feed"}
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -572,7 +597,7 @@ export default function HomeView() {
               <MapPin className="w-5 h-5 text-accent" />
               <span>Interactive Store Map</span>
             </h2>
-            <p className="text-xs text-ink font-semibold">
+            <p className="text-xs text-subcopy font-semibold">
               Physical locations & live feeds near {activeLocation.label}
             </p>
           </div>
@@ -595,10 +620,14 @@ export default function HomeView() {
       </section>
 
       {/* Live Stream Modal */}
-      {activeModalStoreId && (
+      {(activeModalStoreId || activeModalProduct) && (
         <LiveStreamModal
-          storeId={activeModalStoreId}
-          onClose={() => setActiveModalStoreId(null)}
+          storeId={activeModalProduct ? null : activeModalStoreId}
+          product={activeModalProduct}
+          onClose={() => {
+            setActiveModalStoreId(null);
+            setActiveModalProduct(null);
+          }}
         />
       )}
     </div>

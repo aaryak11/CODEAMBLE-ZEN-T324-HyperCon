@@ -13,6 +13,7 @@ export default function SearchResults({ query }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeStoreId, setActiveStoreId] = useState(null);
+  const [activeProduct, setActiveProduct] = useState(null);
 
   useEffect(() => {
     if (!query) return;
@@ -97,7 +98,7 @@ export default function SearchResults({ query }) {
             <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-ink tracking-tight">
               Results for &ldquo;<span className="text-accent underline decoration-3">{query}</span>&rdquo;
             </h1>
-            <p className="text-xs text-ink font-semibold">
+            <p className="text-xs text-subcopy font-semibold">
               Comparing price + proximity + delivery speed across local partner stores & platforms
             </p>
           </div>
@@ -143,7 +144,7 @@ export default function SearchResults({ query }) {
       {sortedResults.length === 0 ? (
         <div className="bg-surface border-3 border-ink rounded-xl p-12 text-center space-y-3 shadow-brutal">
           <p className="text-ink font-display font-extrabold text-lg">No results found matching &ldquo;{query}&rdquo;</p>
-          <p className="text-xs text-ink font-semibold">Try searching for Tomato, Banana, Milk, Apples, or Potato.</p>
+          <p className="text-xs text-subcopy font-semibold">Try searching for Tomato, Banana, Milk, Apples, or Potato.</p>
         </div>
       ) : (
         /* Results List */
@@ -206,7 +207,7 @@ export default function SearchResults({ query }) {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 text-xs text-ink font-semibold pt-1">
+                      <div className="flex items-center gap-3 text-xs text-subcopy font-semibold pt-1">
                         <span className="flex items-center gap-1">
                           <MapPin className="w-3.5 h-3.5 text-accent" />
                           {r.type === "local_store" ? `${r.distanceKm.toFixed(1)} km away` : "Warehouse Direct"}
@@ -232,16 +233,22 @@ export default function SearchResults({ query }) {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {r.hasLiveVerification && (
-                        <button
-                          onClick={() => setActiveStoreId(r.storeId)}
-                          className="py-2 px-3 bg-surface hover:bg-base text-ink border-2 border-ink rounded-md text-xs font-bold font-display flex items-center gap-1.5 shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition cursor-pointer"
-                        >
-                          <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
-                          <Video className="w-3.5 h-3.5 text-ink" />
-                          <span>View Live Shelf</span>
-                        </button>
-                      )}
+                      <button
+                        onClick={() => setActiveProduct({
+                          id: r.id || r.productId,
+                          name: r.productName,
+                          storeName: r.storeName,
+                          price: r.price,
+                          unit: r.unit,
+                          imageUrl: r.imageUrl,
+                        })}
+                        className="py-2 px-3 bg-surface hover:bg-red-50 text-ink border-2 border-ink rounded-md text-xs font-bold font-display flex items-center gap-1.5 shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition cursor-pointer"
+                        title="Watch live shelf camera for this product"
+                      >
+                        <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                        <Video className="w-3.5 h-3.5 text-ink" />
+                        <span>Live View</span>
+                      </button>
 
                       <button
                         onClick={() => addToCart(r)}
@@ -261,10 +268,14 @@ export default function SearchResults({ query }) {
       )}
 
       {/* Live Stream Modal */}
-      {activeStoreId && (
+      {(activeStoreId || activeProduct) && (
         <LiveStreamModal
-          storeId={activeStoreId}
-          onClose={() => setActiveStoreId(null)}
+          storeId={activeProduct ? null : activeStoreId}
+          product={activeProduct}
+          onClose={() => {
+            setActiveStoreId(null);
+            setActiveProduct(null);
+          }}
         />
       )}
     </div>

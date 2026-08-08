@@ -28,7 +28,8 @@ import {
   Check,
   X,
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  Activity
 } from "lucide-react";
 
 export default function AdminPortal({ onBackToCustomer }) {
@@ -126,10 +127,45 @@ export default function AdminPortal({ onBackToCustomer }) {
     }
   };
 
+  // 4. Fetch Stream Health & Verification Audit Logs
+  const [streamHealth, setStreamHealth] = useState(null);
+  const [loadingHealth, setLoadingHealth] = useState(false);
+
+  const fetchStreamHealth = async () => {
+    setLoadingHealth(true);
+    try {
+      const res = await fetch("/api/streams/health");
+      if (res.ok) {
+        const data = await res.json();
+        setStreamHealth(data);
+      }
+    } catch (err) {
+      console.warn("Error fetching stream health:", err);
+    } finally {
+      setLoadingHealth(false);
+    }
+  };
+
+  const handleRunVerificationSweep = async () => {
+    setLoadingHealth(true);
+    try {
+      const res = await fetch("/api/streams/verify-now", { method: "POST" });
+      if (res.ok) {
+        showToast("AI Feed Verification Sweep Completed!");
+        fetchStreamHealth();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingHealth(false);
+    }
+  };
+
   useEffect(() => {
     fetchInventory();
     fetchPayouts();
     fetchSupportTickets();
+    fetchStreamHealth();
   }, [token]);
 
   // Inventory Save Handler (Add / Edit)
@@ -326,6 +362,7 @@ export default function AdminPortal({ onBackToCustomer }) {
           {[
             { id: "overview", label: "Store & Live Camera", icon: Video },
             { id: "inventory", label: `Perishable Inventory (${inventory.length})`, icon: Layers },
+            { id: "feedHealth", label: "AI Feed Reliability", icon: ShieldCheck },
             { id: "payouts", label: "Payouts & 10% Commission", icon: DollarSign },
             { id: "orders", label: `Live Orders (${orders.length})`, icon: PackageCheck },
             { id: "support", label: `Support Tickets (${supportTickets.length})`, icon: LifeBuoy },
@@ -980,6 +1017,126 @@ export default function AdminPortal({ onBackToCustomer }) {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* TAB 6: AI FEED RELIABILITY & HEALTH LOGS */}
+        {activeTab === "feedHealth" && (
+          <div className="space-y-6">
+            <div className="bg-surface border-3 border-ink rounded-xl p-5 shadow-brutal flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-display font-extrabold text-ink tracking-tight flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-accent" />
+                  <span>AI Live Feed Reliability & Motion Analysis</span>
+                </h2>
+                <p className="text-xs text-subcopy font-semibold mt-0.5">
+                  Automated background frame-diff, loop detection, & camera stream audit engine
+                </p>
+              </div>
+
+              <button
+                onClick={handleRunVerificationSweep}
+                disabled={loadingHealth}
+                className="px-4 py-2.5 bg-accent hover:bg-accent/90 text-surface text-xs font-bold font-display rounded-lg border-2 border-ink shadow-brutal-sm flex items-center gap-2 cursor-pointer disabled:opacity-50 transition active:translate-x-[1px] active:translate-y-[1px] active:shadow-none self-start sm:self-auto"
+              >
+                <RefreshCw className={`w-4 h-4 ${loadingHealth ? "animate-spin" : ""}`} />
+                <span>Run Instant AI Verification Sweep</span>
+              </button>
+            </div>
+
+            {/* Metrics Breakdown */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-surface border-3 border-ink rounded-xl p-4 shadow-brutal space-y-1">
+                <span className="text-[11px] font-bold text-ink uppercase tracking-wider">Verified Live Streams</span>
+                <p className="text-3xl font-extrabold font-display text-emerald-700">
+                  {streamHealth?.verifiedCount || 0}
+                </p>
+                <span className="text-[11px] text-subcopy font-semibold">Motion & Perceptual Hash OK</span>
+              </div>
+
+              <div className="bg-surface border-3 border-ink rounded-xl p-4 shadow-brutal space-y-1">
+                <span className="text-[11px] font-bold text-ink uppercase tracking-wider">Unverified / Suspicious</span>
+                <p className="text-3xl font-extrabold font-display text-amber-600">
+                  {streamHealth?.unreliableCount || 0}
+                </p>
+                <span className="text-[11px] text-subcopy font-semibold">Static/Looped Video Flagged</span>
+              </div>
+
+              <div className="bg-surface border-3 border-ink rounded-xl p-4 shadow-brutal space-y-1">
+                <span className="text-[11px] font-bold text-ink uppercase tracking-wider">Offline Streams</span>
+                <p className="text-3xl font-extrabold font-display text-red-600">
+                  {streamHealth?.offlineCount || 0}
+                </p>
+                <span className="text-[11px] text-subcopy font-semibold">Connection Timed Out</span>
+              </div>
+            </div>
+
+            {/* Audit Log Table */}
+            <div className="bg-surface border-3 border-ink rounded-xl p-5 shadow-brutal space-y-4">
+              <div className="flex items-center justify-between border-b border-ink/10 pb-3">
+                <h3 className="font-extrabold font-display text-base text-ink">Background Verification Audit Log</h3>
+                <span className="text-xs font-mono font-bold bg-base border border-ink px-2 py-0.5 rounded text-ink">
+                  {streamHealth?.logs?.length || 0} Recent Audits
+                </span>
+              </div>
+
+              {!streamHealth?.logs || streamHealth.logs.length === 0 ? (
+                <p className="text-xs font-semibold text-subcopy text-center py-6">
+                  No verification audit logs recorded yet. Trigger a sweep above.
+                </p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs font-semibold">
+                    <thead>
+                      <tr className="border-b-2 border-ink text-ink font-bold font-display uppercase tracking-wider bg-base text-[11px]">
+                        <th className="py-2.5 px-3">Timestamp</th>
+                        <th className="py-2.5 px-3">Store Name</th>
+                        <th className="py-2.5 px-3">Verdict Status</th>
+                        <th className="py-2.5 px-3">Motion Diff Score</th>
+                        <th className="py-2.5 px-3">Loop Detected</th>
+                        <th className="py-2.5 px-3">Confidence</th>
+                        <th className="py-2.5 px-3">Analysis Findings</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-ink/10 font-mono text-[11px]">
+                      {streamHealth.logs.map((log) => (
+                        <tr key={log.id} className="hover:bg-base/50 transition">
+                          <td className="py-2.5 px-3 text-ink font-bold">
+                            {new Date(log.timestamp).toLocaleTimeString()}
+                          </td>
+                          <td className="py-2.5 px-3 text-ink font-sans font-extrabold">{log.storeName}</td>
+                          <td className="py-2.5 px-3">
+                            {log.verdict === "verified" ? (
+                              <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-950 border border-emerald-700 font-extrabold">
+                                VERIFIED
+                              </span>
+                            ) : log.verdict === "unreliable" ? (
+                              <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-950 border border-amber-700 font-extrabold">
+                                UNVERIFIED
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded bg-red-100 text-red-950 border border-red-700 font-extrabold">
+                                OFFLINE
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3 text-ink">{log.diffScore}%</td>
+                          <td className="py-2.5 px-3">
+                            {log.loopDetected ? (
+                              <span className="text-amber-700 font-bold">YES (LOOP)</span>
+                            ) : (
+                              <span className="text-emerald-700">NO</span>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-3 text-ink font-bold">{log.confidenceScore}%</td>
+                          <td className="py-2.5 px-3 text-subcopy font-sans text-xs font-medium">{log.reason}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

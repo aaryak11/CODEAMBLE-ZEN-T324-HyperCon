@@ -1,9 +1,18 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
-import { X, MapPin, Check, Navigation } from "lucide-react";
+import { X, MapPin, Check, Navigation, RefreshCw, AlertCircle } from "lucide-react";
 
 export default function LocationModal() {
-  const { isLocationModalOpen, setIsLocationModalOpen, userLocation, updateLocation } = useAuth();
+  const {
+    isLocationModalOpen,
+    setIsLocationModalOpen,
+    userLocation,
+    updateLocation,
+    requestGpsLocation,
+    isGpsLoading,
+    gpsError,
+  } = useAuth();
+
   const [customAddress, setCustomAddress] = useState("");
 
   if (!isLocationModalOpen) return null;
@@ -20,6 +29,15 @@ export default function LocationModal() {
     setIsLocationModalOpen(false);
   };
 
+  const handleGpsTrigger = async () => {
+    try {
+      await requestGpsLocation();
+      setIsLocationModalOpen(false);
+    } catch (err) {
+      // Error handled by AuthContext state
+    }
+  };
+
   const handleCustomSubmit = (e) => {
     e.preventDefault();
     if (!customAddress.trim()) return;
@@ -34,7 +52,7 @@ export default function LocationModal() {
 
   return (
     <div
-      className="fixed inset-0 bg-ink/70 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-ink/70 z-50 flex items-center justify-center p-4 animate-in fade-in"
       onClick={() => setIsLocationModalOpen(false)}
     >
       <div
@@ -49,7 +67,7 @@ export default function LocationModal() {
             </div>
             <div>
               <h3 className="font-bold font-display text-lg text-ink">Choose Delivery Location</h3>
-              <p className="text-xs text-ink/70 font-medium">Rankings update automatically</p>
+              <p className="text-xs text-subcopy font-semibold">Store distances & ranking update live</p>
             </div>
           </div>
 
@@ -61,12 +79,42 @@ export default function LocationModal() {
           </button>
         </div>
 
-        {/* Preset Location Buttons */}
+        {/* Live GPS Trigger Button */}
         <div className="space-y-2">
-          <p className="text-xs font-bold font-display uppercase tracking-wider text-ink/70">Popular Locations</p>
+          <button
+            onClick={handleGpsTrigger}
+            disabled={isGpsLoading}
+            className="w-full p-3.5 bg-accent hover:bg-accent/90 text-surface rounded-lg border-2 border-ink font-bold font-display text-xs flex items-center justify-between shadow-brutal-sm cursor-pointer disabled:opacity-50 transition active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+          >
+            <div className="flex items-center gap-2">
+              {isGpsLoading ? (
+                <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+              ) : (
+                <Navigation className="w-4 h-4 shrink-0" />
+              )}
+              <span>{isGpsLoading ? "Locating device via GPS..." : "Use Current GPS Location"}</span>
+            </div>
+            {userLocation?.isLiveDevice && (
+              <span className="text-[10px] bg-surface text-ink border border-ink px-2 py-0.5 rounded font-mono font-extrabold">
+                ACTIVE
+              </span>
+            )}
+          </button>
+
+          {gpsError && (
+            <div className="p-2.5 bg-red-100 border-2 border-red-700 rounded-md text-red-950 text-xs font-semibold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-700" />
+              <span>{gpsError}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Preset Location Buttons */}
+        <div className="space-y-2 pt-1 border-t-2 border-ink/10">
+          <p className="text-xs font-bold font-display uppercase tracking-wider text-subcopy">Preset Delivery Zones</p>
           <div className="space-y-2">
             {presets.map((loc) => {
-              const isSelected = userLocation?.label === loc.label;
+              const isSelected = !userLocation?.isLiveDevice && userLocation?.label === loc.label;
               return (
                 <button
                   key={loc.label}
@@ -78,7 +126,7 @@ export default function LocationModal() {
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <Navigation className="w-4 h-4 shrink-0" />
+                    <MapPin className="w-4 h-4 shrink-0" />
                     <span>{loc.label}</span>
                   </div>
                   {isSelected && <Check className="w-4 h-4 shrink-0" />}
@@ -97,11 +145,11 @@ export default function LocationModal() {
               value={customAddress}
               onChange={(e) => setCustomAddress(e.target.value)}
               placeholder="e.g. Bandra West, Mumbai"
-              className="flex-1 px-3 py-2 bg-surface border-2 border-ink rounded-lg text-ink text-xs font-medium focus:outline-none placeholder-ink/40 shadow-brutal-sm"
+              className="flex-1 px-3 py-2 bg-surface border-2 border-ink rounded-lg text-ink text-xs font-semibold focus:outline-none placeholder-ink/40 shadow-brutal-sm"
             />
             <button
               type="submit"
-              className="px-4 py-2 bg-accent hover:bg-accent/90 text-surface text-xs font-bold font-display rounded-lg border-2 border-ink shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition cursor-pointer"
+              className="px-4 py-2 bg-surface hover:bg-base text-ink text-xs font-bold font-display rounded-lg border-2 border-ink shadow-brutal-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition cursor-pointer"
             >
               Set
             </button>

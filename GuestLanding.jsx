@@ -31,7 +31,7 @@ export default function GuestLanding() {
           <h1 className="text-4xl sm:text-5xl font-display font-extrabold tracking-tight text-ink">
             HyperCon
           </h1>
-          <p className="text-sm sm:text-base text-ink max-w-lg mx-auto leading-relaxed font-semibold">
+          <p className="text-sm sm:text-base text-subcopy max-w-lg mx-auto leading-relaxed font-semibold">
             See the shelf before you order. Watch live camera feeds of local store shelves to verify stock and freshness.
           </p>
         </div>
@@ -41,7 +41,7 @@ export default function GuestLanding() {
           <div className="flex items-center justify-between border-b-2 border-ink/10 pb-3">
             <div className="space-y-0.5">
               <h2 className="text-xl font-display font-extrabold text-ink">Welcome to HyperCon</h2>
-              <p className="text-xs text-ink font-semibold">
+              <p className="text-xs text-subcopy font-semibold">
                 Enter your name or sign in to start exploring live store feeds.
               </p>
             </div>
@@ -83,7 +83,7 @@ export default function GuestLanding() {
           <div className="p-4 rounded-xl bg-surface border-3 border-ink shadow-brutal space-y-2">
             <Video className="w-5 h-5 text-accent" />
             <h3 className="text-sm font-display font-extrabold text-ink">Live Camera Feeds</h3>
-            <p className="text-xs text-ink font-semibold">
+            <p className="text-xs text-subcopy font-semibold">
               RTSP/HLS live streams directly from partner store shelves.
             </p>
           </div>
@@ -91,7 +91,7 @@ export default function GuestLanding() {
           <div className="p-4 rounded-xl bg-surface border-3 border-ink shadow-brutal space-y-2">
             <Zap className="w-5 h-5 text-accent" />
             <h3 className="text-sm font-display font-extrabold text-ink">Smart Ranking</h3>
-            <p className="text-xs text-ink font-semibold">
+            <p className="text-xs text-subcopy font-semibold">
               Compare price + proximity + delivery speed automatically.
             </p>
           </div>
@@ -99,7 +99,7 @@ export default function GuestLanding() {
           <div className="p-4 rounded-xl bg-surface border-3 border-ink shadow-brutal space-y-2">
             <MapPin className="w-5 h-5 text-accent" />
             <h3 className="text-sm font-display font-extrabold text-ink">GPS Location</h3>
-            <p className="text-xs text-ink font-semibold">
+            <p className="text-xs text-subcopy font-semibold">
               Real-time location distance sorting across 25 partner stores.
             </p>
           </div>
