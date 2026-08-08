@@ -24,8 +24,8 @@ export function initRealtime(server) {
   return wss;
 }
 
-export function broadcastEvent(eventType, payload) {
-  const message = JSON.stringify({ type: eventType, payload, timestamp: new Date().toISOString() });
+export function broadcast(data) {
+  const message = typeof data === "string" ? data : JSON.stringify(data);
   for (const client of clients) {
     if (client.readyState === WebSocket.OPEN) {
       try {
@@ -35,4 +35,8 @@ export function broadcastEvent(eventType, payload) {
       }
     }
   }
+}
+
+export function broadcastEvent(eventType, payload) {
+  broadcast({ type: eventType, payload, timestamp: new Date().toISOString() });
 }

@@ -22,6 +22,7 @@ import adminInventoryRouter from "./routes/adminInventory.js";
 import adminPayoutsRouter from "./routes/adminPayouts.js";
 import supportRouter from "./routes/support.js";
 import { initRealtime } from "./realtime.js";
+import { startFeedVerificationWorker } from "./services/feedVerifier.js";
 
 const app = express();
 app.use(cors());
@@ -163,7 +164,10 @@ async function autoSeedIfEmpty() {
 connectDB()
   .then(async () => {
     await autoSeedIfEmpty();
-    server.listen(PORT, () => console.log(`[server] listening on http://localhost:${PORT} with WebSockets enabled on /ws`));
+    server.listen(PORT, () => {
+      console.log(`[server] listening on http://localhost:${PORT} with WebSockets enabled on /ws`);
+      startFeedVerificationWorker(30000);
+    });
   })
   .catch((err) => {
     console.error("[server] failed to start server:", err.message);

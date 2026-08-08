@@ -1,0 +1,5 @@
+# Get this from MongoDB Atlas -> Database -> Connect -> Drivers
+MONGODB_URI=mongodb+srv://<user>:<password>@cluster0.xxxxx.mongodb.net/hypercon
+PORT=4000
+# Base URL where MediaMTX is serving HLS (default MediaMTX HLS port is 8888)
+MEDIAMTX_HLS_BASE=http://localhost:8888
