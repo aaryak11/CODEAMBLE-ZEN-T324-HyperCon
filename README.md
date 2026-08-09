@@ -429,16 +429,6 @@ Orders are split automatically on creation (`Order.js`):
 
 ---
 
-## 🔮 What's Stubbed / Left To Build
-
-- **Real motion/loop/deepfake detection** — `feedVerifier.js` simulates diff-scores and perceptual hashes, and the `ai_generated` verdict is a hard-coded match on one demo store rather than genuine content analysis; a production version would need real frame hashing and a model capable of actually inspecting video.
-- **Real geolocation in search results** — worth double-checking whether `SearchResults.jsx` still hardcodes a demo lat/lng vs. using `useGeolocation.js` end-to-end.
-- **Secrets hygiene** — make sure `.env.example` never carries live API keys, and that `.env` stays git-ignored.
-- **Seed data breadth** — a handful of demo stores/products cover the core pipeline (search → stream → cart → order); expand once the flow is validated further.
-- **Live camera source** — Live Stock still runs primarily off looped demo videos via `push-loop`; `CameraPublisher.jsx` is a step toward pushing a real browser camera into the pipeline, but wiring an actual store CCTV/RTSP feed end-to-end is a follow-up.
-
----
-
 ## 🧠 Core Design Concepts
 
 - Price comparison is computed server-side in `/api/search`, combining `StoreInventory` and `MockExternalPrice` data
