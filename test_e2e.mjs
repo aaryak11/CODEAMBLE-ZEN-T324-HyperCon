@@ -1,3 +1,4 @@
+import http from "http";
 import WebSocket from "ws";
 
 const BASE_URL = "http://localhost:4000";
@@ -175,6 +176,30 @@ async function runTests() {
     passed++;
   } else {
     console.error("FAIL 11: Strict search relevance", nonExistentSearch);
+    failed++;
+  }
+
+  // 11b. Search 'mango' -> only mango items
+  const mangoSearch = await request("/api/search?q=mango");
+  const mangoItems = mangoSearch.data.results || [];
+  const onlyMango = mangoItems.every((item) => item.productName.toLowerCase().includes("mango"));
+  if (mangoSearch.ok && mangoItems.length > 0 && onlyMango) {
+    console.log(`PASS 11b: Search 'mango' returned ${mangoItems.length} items, all containing 'mango'`);
+    passed++;
+  } else {
+    console.error("FAIL 11b: Search 'mango'", mangoItems);
+    failed++;
+  }
+
+  // 11c. Search 'milk' -> only milk items
+  const milkSearch = await request("/api/search?q=milk");
+  const milkItems = milkSearch.data.results || [];
+  const onlyMilk = milkItems.every((item) => item.productName.toLowerCase().includes("milk") || item.category?.toLowerCase().includes("dairy"));
+  if (milkSearch.ok && milkItems.length > 0 && onlyMilk) {
+    console.log(`PASS 11c: Search 'milk' returned ${milkItems.length} items, all strictly relevant`);
+    passed++;
+  } else {
+    console.error("FAIL 11c: Search 'milk'", milkItems);
     failed++;
   }
 

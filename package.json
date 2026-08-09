@@ -1,24 +1,16 @@
 {
-  "name": "hypercon-server",
+  "name": "hypercon-v1",
   "version": "1.0.0",
-  "private": true,
-  "type": "module",
+  "description": "This is not a finished app. It's a real, runnable skeleton so you're not typing boilerplate on day 1 — models, routes, scoring logic, and the video pipeline wiring are done. What's missing is: your actual Mongo cluster, a real/looped camera feed, UI polish, and the map view.",
+  "main": "index.js",
   "scripts": {
-    "dev": "node --watch src/index.js",
-    "start": "node src/index.js",
-    "seed": "node src/seed.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
   "dependencies": {
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.3",
-    "mongoose": "^8.5.0",
-    "morgan": "^1.10.0",
     "ws": "^8.21.2"
-  },
-  "devDependencies": {
-    "mongodb-memory-server": "^11.2.0"
   }
 }
