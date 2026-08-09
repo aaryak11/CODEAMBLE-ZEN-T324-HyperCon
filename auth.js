@@ -10,6 +10,7 @@ const memoryUsers = new Map();
 // Helper to generate IDs
 const genId = () => "usr_" + Math.random().toString(36).substring(2, 9);
 
+
 // POST /api/auth/register
 router.post("/register", async (req, res) => {
   try {

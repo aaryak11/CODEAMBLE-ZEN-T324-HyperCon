@@ -1,361 +1,218 @@
 import { Router } from "express";
 import Store from "../models/Store.js";
+import StoreInventory from "../models/StoreInventory.js";
+import Product from "../models/Product.js";
 import mongoose from "mongoose";
+import { isDBConnected } from "../db.js";
+import { MEMORY_STORE_INVENTORY } from "./adminInventory.js";
 
 const router = Router();
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 export const MEMORY_STORES = [
   {
     _id: "66b1a0000000000000000001",
     name: "Fresh Mart - Dombivli East",
     location: { lat: 19.2183, lng: 73.0864 },
-    address: "Station Road, Dombivli East, Thane",
-    cameraStreamId: "store1",
+    address: "Shop 12, Station Road, Dombivli East, Thane",
+    phone: "9820198201",
     contact: "+91-9820198201",
     rating: 4.8,
-    feedStatus: "active",
-    verificationTime: "1 min ago",
-    activeCameras: 4,
-    openingHours: "7:00 AM - 10:30 PM",
+    trustScore: { overall: 4.8, freshness: 4.9, deliveryAccuracy: 4.7, priceConsistency: 4.8, cameraUptime: 95 },
+    cameraStreamId: "store1",
+    cameraFeedUrl: "https://videos.pexels.com/video-files/4066325/4066325-hd_1920_1080_25fps.mp4",
+    cameraStatus: "live",
+    feedReliability: "verified",
+    operatingHours: { open: "07:00", close: "22:00" },
+    avgDeliveryTime: 20,
+    deliveryRadius: 5,
+    description: "Your neighborhood fresh grocery store with daily farm-direct produce.",
+    specialties: ["organic", "farm-fresh", "daily-delivery"]
   },
   {
     _id: "66b1a0000000000000000002",
-    name: "Green Basket - Kalyan West",
+    name: "Green Basket - AI Potato Demo",
     location: { lat: 19.2403, lng: 73.1305 },
-    address: "Shivaji Chowk, Kalyan West, Thane",
-    cameraStreamId: "store2",
+    address: "45, Shivaji Chowk, Kalyan West, Thane",
+    phone: "9833498334",
     contact: "+91-9833498334",
     rating: 4.5,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 6,
-    openingHours: "6:30 AM - 11:00 PM",
+    trustScore: { overall: 4.5, freshness: 4.3, deliveryAccuracy: 4.6, priceConsistency: 4.5, cameraUptime: 88 },
+    cameraStreamId: "potato_cam",
+    cameraFeedUrl: "https://videos.pexels.com/video-files/4066325/4066325-hd_1920_1080_25fps.mp4",
+    cameraStatus: "live",
+    feedReliability: "ai_generated",
+    operatingHours: { open: "06:30", close: "23:00" },
+    avgDeliveryTime: 25,
+    deliveryRadius: 4,
+    description: "Wholesale prices on everyday essentials. Bulk buying specialists.",
+    specialties: ["wholesale", "bulk-deals", "staples"]
   },
   {
     _id: "66b1a0000000000000000003",
     name: "Nature's Harvest - Thane Central",
     location: { lat: 19.1970, lng: 72.9730 },
     address: "Viviana Mall Circle, Thane West",
-    cameraStreamId: "store1",
+    phone: "9877198771",
     contact: "+91-9877198771",
     rating: 4.9,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 8,
-    openingHours: "7:00 AM - 10:00 PM",
-  },
-  {
-    _id: "66b1a0000000000000000004",
-    name: "SuperFresh Organics - Vashi Sec 17",
-    location: { lat: 19.0770, lng: 72.9980 },
-    address: "Sector 17 Market, Vashi, Navi Mumbai",
-    cameraStreamId: "store2",
-    contact: "+91-9820551122",
-    rating: 4.7,
-    feedStatus: "active",
-    verificationTime: "Just updated",
-    activeCameras: 5,
-    openingHours: "7:30 AM - 9:30 PM",
-  },
-  {
-    _id: "66b1a0000000000000000005",
-    name: "Daily Essentials - Dombivli West",
-    location: { lat: 19.2150, lng: 73.0790 },
-    address: "Subhash Road, Dombivli West",
+    trustScore: { overall: 4.9, freshness: 5.0, deliveryAccuracy: 4.8, priceConsistency: 4.9, cameraUptime: 98 },
     cameraStreamId: "store1",
-    contact: "+91-9819283746",
-    rating: 4.4,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 3,
-    openingHours: "7:00 AM - 10:00 PM",
-  },
-  {
-    _id: "66b1a0000000000000000006",
-    name: "Farm2Fork Market - Kalyan East",
-    location: { lat: 19.2320, lng: 73.1380 },
-    address: "Kolsewadi, Kalyan East",
-    cameraStreamId: "store2",
-    contact: "+91-9867123456",
-    rating: 4.3,
-    feedStatus: "delayed",
-    verificationTime: "3 mins ago",
-    activeCameras: 2,
-    openingHours: "7:00 AM - 9:00 PM",
-  },
-  {
-    _id: "66b1a0000000000000000007",
-    name: "FarmDirect Express - Ulhasnagar",
-    location: { lat: 19.2190, lng: 73.1510 },
-    address: "Section 3 Market, Ulhasnagar",
-    cameraStreamId: "store1",
-    contact: "+91-9890123456",
-    rating: 4.6,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 4,
-    openingHours: "6:00 AM - 10:30 PM",
-  },
-  {
-    _id: "66b1a0000000000000000008",
-    name: "PurePantry Grocers - Majiwada",
-    location: { lat: 19.2120, lng: 72.9810 },
-    address: "Lodha Paradise Complex, Majiwada Thane",
-    cameraStreamId: "store2",
-    contact: "+91-9821998877",
-    rating: 4.8,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 6,
-    openingHours: "7:00 AM - 10:00 PM",
-  },
-  {
-    _id: "66b1a0000000000000000009",
-    name: "Evergreen Organics - Ghodbunder",
-    location: { lat: 19.2550, lng: 72.9650 },
-    address: "Hypercity Plaza, Ghodbunder Rd, Thane",
-    cameraStreamId: "store1",
-    contact: "+91-9833112233",
-    rating: 4.7,
-    feedStatus: "delayed",
-    verificationTime: "4 mins ago",
-    activeCameras: 4,
-    openingHours: "8:00 AM - 10:00 PM",
-  },
-  {
-    _id: "66b1a0000000000000000010",
-    name: "QuickPick Supermarket - Airoli",
-    location: { lat: 19.1580, lng: 72.9960 },
-    address: "Sector 5 Plaza, Airoli, Navi Mumbai",
-    cameraStreamId: "store2",
-    contact: "+91-9820445566",
-    rating: 4.5,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 5,
-    openingHours: "7:00 AM - 10:30 PM",
-  },
-  {
-    _id: "66b1a0000000000000000011",
-    name: "FreshField Produce - Kopar Khairane",
-    location: { lat: 19.1120, lng: 73.0110 },
-    address: "Sector 14 Market, Kopar Khairane",
-    cameraStreamId: "store1",
-    contact: "+91-9867990011",
-    rating: 4.6,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 4,
-    openingHours: "6:30 AM - 10:00 PM",
-  },
-  {
-    _id: "66b1a0000000000000000012",
-    name: "CityBazar Grocery - Bhiwandi",
-    location: { lat: 19.2810, lng: 73.0550 },
-    address: "Dhamankar Naka, Bhiwandi Bypass",
-    cameraStreamId: "store2",
-    contact: "+91-9892334455",
-    rating: 4.2,
-    feedStatus: "offline",
-    verificationTime: "Feed offline",
-    activeCameras: 0,
-    openingHours: "8:00 AM - 9:00 PM",
-  },
-  {
-    _id: "66b1a0000000000000000013",
-    name: "Krushi Seva Kendra - Badlapur",
-    location: { lat: 19.1650, lng: 73.2210 },
-    address: "Katrap Chowk, Badlapur West",
-    cameraStreamId: "store1",
-    contact: "+91-9821667788",
-    rating: 4.7,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 3,
-    openingHours: "6:00 AM - 9:30 PM",
-  },
-  {
-    _id: "66b1a0000000000000000014",
-    name: "LocalGreens Co-op - Ambernath",
-    location: { lat: 19.1860, lng: 73.1890 },
-    address: "Station Road, Ambernath West",
-    cameraStreamId: "store2",
-    contact: "+91-9833778899",
-    rating: 4.8,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 5,
-    openingHours: "6:30 AM - 10:00 PM",
-  },
-  {
-    _id: "66b1a0000000000000000015",
-    name: "Nature's Pantry - Powai Lake",
-    location: { lat: 19.1200, lng: 72.9050 },
-    address: "Hiranandani Gardens, Powai, Mumbai",
-    cameraStreamId: "store1",
-    contact: "+91-9820889900",
-    rating: 4.9,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 7,
-    openingHours: "7:00 AM - 11:00 PM",
-  },
-  {
-    _id: "66b1a0000000000000000016",
-    name: "Sunshine Superstore - Mulund",
-    location: { lat: 19.1720, lng: 72.9560 },
-    address: "LBS Marg, Mulund West, Mumbai",
-    cameraStreamId: "store2",
-    contact: "+91-9867445566",
-    rating: 4.6,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 4,
-    openingHours: "7:00 AM - 10:00 PM",
-  },
-  {
-    _id: "66b1a0000000000000000017",
-    name: "PrimeGroceries - Ghatkopar",
-    location: { lat: 19.0860, lng: 72.9080 },
-    address: "RB Mehta Marg, Ghatkopar East",
-    cameraStreamId: "store1",
-    contact: "+91-9821223344",
-    rating: 4.5,
-    feedStatus: "delayed",
-    verificationTime: "2 mins ago",
-    activeCameras: 3,
-    openingHours: "7:30 AM - 10:00 PM",
-  },
-  {
-    _id: "66b1a0000000000000000018",
-    name: "OrganicRoots Market - Bhandup",
-    location: { lat: 19.1450, lng: 72.9360 },
-    address: "Station Road, Bhandup West",
-    cameraStreamId: "store2",
-    contact: "+91-9833556677",
-    rating: 4.7,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 4,
-    openingHours: "7:00 AM - 9:30 PM",
-  },
-  {
-    _id: "66b1a0000000000000000019",
-    name: "GreenGrove Supermarket - Naupada",
-    location: { lat: 19.1880, lng: 72.9710 },
-    address: "Gokhale Road, Naupada Thane",
-    cameraStreamId: "store1",
-    contact: "+91-9820334455",
-    rating: 4.8,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 6,
-    openingHours: "7:00 AM - 10:30 PM",
-  },
-  {
-    _id: "66b1a0000000000000000020",
-    name: "MetroProduce Hub - Kalwa Naka",
-    location: { lat: 19.2010, lng: 72.9940 },
-    address: "Kalwa Naka Circle, Thane",
-    cameraStreamId: "store2",
-    contact: "+91-9867112233",
-    rating: 4.4,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 3,
-    openingHours: "6:30 AM - 10:00 PM",
-  },
-  {
-    _id: "66b1a0000000000000000021",
-    name: "FreshStop Express - Mumbra",
-    location: { lat: 19.1890, lng: 73.0230 },
-    address: "Station Road, Mumbra",
-    cameraStreamId: "store1",
-    contact: "+91-9892112233",
-    rating: 4.1,
-    feedStatus: "offline",
-    verificationTime: "Feed offline",
-    activeCameras: 0,
-    openingHours: "8:00 AM - 9:00 PM",
-  },
-  {
-    _id: "66b1a0000000000000000022",
-    name: "DailyHarvest Market - Rabale MIDC",
-    location: { lat: 19.1380, lng: 73.0160 },
-    address: "MIDC Main Road, Rabale",
-    cameraStreamId: "store2",
-    contact: "+91-9821445566",
-    rating: 4.6,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 4,
-    openingHours: "7:00 AM - 9:30 PM",
-  },
-  {
-    _id: "66b1a0000000000000000023",
-    name: "UrbanProduce Pantry - Kanchangad",
-    location: { lat: 19.2290, lng: 72.9780 },
-    address: "Kanchangad Circle, Thane West",
-    cameraStreamId: "store1",
-    contact: "+91-9833223344",
-    rating: 4.7,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 5,
-    openingHours: "7:00 AM - 10:00 PM",
-  },
-  {
-    _id: "66b1a0000000000000000024",
-    name: "GoldenGrain Superstore - Shahad",
-    location: { lat: 19.2560, lng: 73.1520 },
-    address: "Shahad Station Road, Kalyan",
-    cameraStreamId: "store2",
-    contact: "+91-9820778899",
-    rating: 4.5,
-    feedStatus: "active",
-    verificationTime: "Live feed",
-    activeCameras: 4,
-    openingHours: "7:00 AM - 9:30 PM",
-  },
-  {
-    _id: "66b1a0000000000000000025",
-    name: "EcoBazaar Organics - Titwala",
-    location: { lat: 19.3010, lng: 73.2080 },
-    address: "Mahaganpati Temple Road, Titwala",
-    cameraStreamId: "store1",
-    contact: "+91-9867889900",
-    rating: 4.6,
-    feedStatus: "delayed",
-    verificationTime: "5 mins ago",
-    activeCameras: 3,
-    openingHours: "6:30 AM - 9:00 PM",
-  },
+    cameraFeedUrl: "https://videos.pexels.com/video-files/4066325/4066325-hd_1920_1080_25fps.mp4",
+    cameraStatus: "live",
+    feedReliability: "verified",
+    operatingHours: { open: "07:00", close: "22:00" },
+    avgDeliveryTime: 30,
+    deliveryRadius: 6,
+    description: "100% certified organic produce. Premium quality guaranteed.",
+    specialties: ["organic", "certified", "premium"]
+  }
+];
+
+const DEFAULT_MEMORY_INVENTORY = [
+  { inventoryId: "inv1", productId: "p1", productName: "Fresh Farm Tomatoes", category: "vegetables", unit: "1kg", price: 34, originalPrice: 40, stockStatus: "in_stock", shelfLocation: "Aisle 1, Rack A", freshnessBadge: "Restocked 1h ago", lastRestocked: new Date().toISOString() },
+  { inventoryId: "inv2", productId: "p2", productName: "Cavendish Bananas", category: "fruits", unit: "1 dozen", price: 52, originalPrice: 60, stockStatus: "in_stock", shelfLocation: "Aisle 1, Rack B", freshnessBadge: "Restocked this morning", lastRestocked: new Date().toISOString() },
+  { inventoryId: "inv3", productId: "p3", productName: "Full Cream Farm Milk", category: "dairy", unit: "1 Litre", price: 64, originalPrice: 68, stockStatus: "in_stock", shelfLocation: "Aisle 2, Rack A", freshnessBadge: "Fresh batch arrived today", lastRestocked: new Date().toISOString() },
+  { inventoryId: "inv4", productId: "p4", productName: "Royal Gala Apples", category: "fruits", unit: "1kg", price: 145, originalPrice: 160, stockStatus: "in_stock", shelfLocation: "Aisle 1, Rack C", freshnessBadge: "Restocked 2h ago", lastRestocked: new Date().toISOString() },
+  { inventoryId: "inv5", productId: "p5", productName: "Organic Brown Potatoes", category: "vegetables", unit: "1kg", price: 25, originalPrice: 30, stockStatus: "in_stock", shelfLocation: "Aisle 3, Rack A", freshnessBadge: "Restocked yesterday", lastRestocked: new Date().toISOString() },
+  { inventoryId: "inv6", productId: "p6", productName: "Fresh Green Spinach", category: "vegetables", unit: "1 bunch", price: 20, originalPrice: 25, stockStatus: "in_stock", shelfLocation: "Aisle 1, Rack A", freshnessBadge: "Harvested today", lastRestocked: new Date().toISOString() },
+  { inventoryId: "inv7", productId: "p7", productName: "Alphonso Mangoes", category: "fruits", unit: "1kg", price: 320, originalPrice: 380, stockStatus: "low_stock", shelfLocation: "Aisle 1, Display Rack", freshnessBadge: "Seasonal Special", lastRestocked: new Date().toISOString() },
+  { inventoryId: "inv8", productId: "p8", productName: "Fresh Malai Paneer", category: "dairy", unit: "200g", price: 95, originalPrice: 110, stockStatus: "in_stock", shelfLocation: "Chiller 1", freshnessBadge: "Restocked 3h ago", lastRestocked: new Date().toISOString() },
+  { inventoryId: "inv9", productId: "p9", productName: "Artisanal Sourdough Bread", category: "bakery", unit: "1 loaf", price: 65, originalPrice: 75, stockStatus: "in_stock", shelfLocation: "Bakery Counter", freshnessBadge: "Baked this morning", lastRestocked: new Date().toISOString() },
+  { inventoryId: "inv10", productId: "p10", productName: "English Cucumber", category: "vegetables", unit: "1kg", price: 28, originalPrice: 35, stockStatus: "in_stock", shelfLocation: "Aisle 1, Rack B", freshnessBadge: "Restocked 1h ago", lastRestocked: new Date().toISOString() },
+  { inventoryId: "inv11", productId: "p11", productName: "Nashik Red Onions", category: "vegetables", unit: "1kg", price: 32, originalPrice: 38, stockStatus: "in_stock", shelfLocation: "Aisle 3, Rack B", freshnessBadge: "Restocked yesterday", lastRestocked: new Date().toISOString() },
+  { inventoryId: "inv12", productId: "p12", productName: "Sweet Yellow Corn", category: "vegetables", unit: "2 cobs", price: 30, originalPrice: 35, stockStatus: "in_stock", shelfLocation: "Aisle 1, Rack C", freshnessBadge: "Restocked this morning", lastRestocked: new Date().toISOString() },
+  { inventoryId: "inv13", productId: "p13", productName: "Seedless Green Grapes", category: "fruits", unit: "500g", price: 75, originalPrice: 90, stockStatus: "in_stock", shelfLocation: "Aisle 1, Rack D", freshnessBadge: "Restocked 2h ago", lastRestocked: new Date().toISOString() },
+  { inventoryId: "inv14", productId: "p14", productName: "Farm Fresh Cow Curd", category: "dairy", unit: "500g", price: 45, originalPrice: 50, stockStatus: "in_stock", shelfLocation: "Chiller 2", freshnessBadge: "Restocked 1h ago", lastRestocked: new Date().toISOString() },
+  { inventoryId: "inv15", productId: "p15", productName: "Pure Vedic A2 Ghee", category: "dairy", unit: "500ml", price: 360, originalPrice: 400, stockStatus: "in_stock", shelfLocation: "Aisle 2, Rack C", freshnessBadge: "Premium Stock", lastRestocked: new Date().toISOString() }
 ];
 
 router.get("/", async (req, res) => {
   try {
-    if (mongoose.connection.readyState === 1) {
+    if (isDBConnected()) {
       const stores = await Store.find().lean();
       if (stores.length > 0) return res.json(stores);
     }
-  } catch (e) {
-    // fallback
-  }
+  } catch (e) {}
   res.json(MEMORY_STORES);
 });
 
 router.get("/:id", async (req, res) => {
   try {
-    if (mongoose.connection.readyState === 1) {
-      const store = await Store.findById(req.params.id).lean();
-      if (store) return res.json(store);
+    const { id } = req.params;
+    const { lat, lng } = req.query;
+    let store, inventory;
+    
+    if (isDBConnected()) {
+      store = await Store.findById(id).lean();
+      if (!store) {
+        store = MEMORY_STORES.find(s => s._id?.toString() === id || s.cameraStreamId === id);
+      }
+      if (!store) return res.status(404).json({ error: 'Store not found' });
+      
+      const dbInv = await StoreInventory.find({ storeId: store._id })
+        .populate('productId')
+        .lean();
+      
+      if (dbInv.length > 0) {
+        inventory = dbInv;
+      } else {
+        inventory = DEFAULT_MEMORY_INVENTORY;
+      }
+    } else {
+      store = MEMORY_STORES.find(s => 
+        s._id?.toString() === id || s.cameraStreamId === id);
+      if (!store) return res.status(404).json({ error: 'Store not found' });
+      inventory = DEFAULT_MEMORY_INVENTORY;
     }
-  } catch (e) {
-    // fallback
+    
+    let distance = null, estimatedDelivery = null;
+    if (lat && lng && store.location) {
+      distance = haversine(parseFloat(lat), parseFloat(lng), 
+                          store.location.lat, store.location.lng);
+      estimatedDelivery = Math.round(distance * 5 + 10);
+    }
+    
+    const categories = {};
+    const inventoryItems = inventory.map((inv, idx) => {
+      const product = inv.productId || inv.product || {};
+      const productName = product.name || inv.productName || 'Unknown';
+      const cat = product.category || inv.category || 'other';
+      const unit = product.unit || inv.unit || '';
+      const price = inv.price || 50;
+      const originalPrice = inv.originalPrice || Math.round(price * 1.15);
+      
+      const item = {
+        inventoryId: inv._id || inv.inventoryId || `inv-${idx}`,
+        productId: product._id || inv.productId || `prod-${idx}`,
+        productName,
+        category: cat,
+        unit,
+        price,
+        originalPrice,
+        discount: originalPrice > price 
+          ? Math.round((1 - price / originalPrice) * 100) : 0,
+        stockStatus: inv.stockStatus || 'in_stock',
+        shelfLocation: inv.shelfLocation || 'Aisle 1',
+        freshnessBadge: inv.freshnessBadge || 'Restocked today',
+        lastRestocked: inv.lastRestocked || new Date().toISOString(),
+        imageUrl: product.imageUrl || inv.imageUrl || ''
+      };
+      if (!categories[item.category]) categories[item.category] = [];
+      categories[item.category].push(item);
+      return item;
+    });
+    
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const openTime = store.operatingHours?.open || "07:00";
+    const closeTime = store.operatingHours?.close || "22:00";
+    const isOpen = currentTime >= openTime && currentTime <= closeTime;
+    
+    res.json({
+      store: {
+        _id: store._id,
+        name: store.name,
+        address: store.address,
+        phone: store.phone || store.contact || '',
+        location: store.location,
+        rating: store.rating || 4.0,
+        trustScore: store.trustScore || { overall: store.rating || 4.0, freshness: 4.5, deliveryAccuracy: 4.0, priceConsistency: 4.2, cameraUptime: 90 },
+        description: store.description || 'Your neighborhood fresh grocery store with daily farm-direct produce.',
+        specialties: store.specialties || ["organic", "farm-fresh", "daily-delivery"],
+        cameraStreamId: store.cameraStreamId || '',
+        cameraFeedUrl: store.cameraFeedUrl || '',
+        cameraStatus: store.cameraStatus || 'live',
+        feedReliability: store.feedReliability || 'verified',
+        operatingHours: store.operatingHours || { open: "07:00", close: "22:00" },
+        isOpen,
+        avgDeliveryTime: store.avgDeliveryTime || 25,
+        deliveryRadius: store.deliveryRadius || 5
+      },
+      distance: distance ? Number(distance.toFixed(2)) : null,
+      estimatedDelivery: estimatedDelivery || store.avgDeliveryTime || 25,
+      totalProducts: inventoryItems.length,
+      categories: Object.keys(categories),
+      inventory: inventoryItems,
+      inventoryByCategory: categories
+    });
+  } catch (error) {
+    console.error('Store detail error:', error);
+    res.status(500).json({ error: 'Failed to fetch store details' });
   }
-  const found = MEMORY_STORES.find((s) => s._id === req.params.id);
-  if (!found) return res.status(404).json({ error: "store not found" });
-  res.json(found);
 });
 
 export default router;
