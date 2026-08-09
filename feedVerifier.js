@@ -2,6 +2,35 @@ import mongoose from "mongoose";
 import Store from "../models/Store.js";
 import { MEMORY_STORES } from "../routes/stores.js";
 import { broadcast } from "../realtime.js";
+import Groq from 'groq-sdk';
+
+const groq = (process.env.GROQ_API_KEY && !process.env.GROQ_API_KEY.includes('YOUR_KEY')) 
+  ? new Groq({ apiKey: process.env.GROQ_API_KEY }) : null;
+
+async function generateAIFakeReason(storeName) {
+  if (!groq) return "This store's camera feed is a known AI-generated/synthetic video, not a live shelf feed.";
+  
+  try {
+    const groqPromise = groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        {
+          role: "system",
+          content: "You are a feed verification system. This store's camera feed is a known AI-generated/synthetic video, not a live shelf feed; write a one-sentence flag explaining why it's untrusted."
+        },
+        { role: "user", content: `Generate a short one-sentence warning flag for the store named "${storeName}".` }
+      ],
+      max_tokens: 100, temperature: 0.2
+    });
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Groq timeout')), 5000));
+    
+    const response = await Promise.race([groqPromise, timeoutPromise]);
+    return response.choices[0].message.content.trim();
+  } catch (err) {
+    console.error('Groq AI generated reason error:', err.message);
+    return "This store's camera feed is a known AI-generated/synthetic video, not a live shelf feed.";
+  }
+}
 
 // In-memory verification logs audit trail (max 100 entries)
 const verificationLogs = [];
@@ -40,7 +69,13 @@ export async function verifyStoreStream(store) {
   let reason = "Genuine live shelf camera stream verified.";
 
   // Simulated edge cases for verification demonstration
-  if (store.feedStatus === "offline" || cameraStreamId === "offline_cam") {
+  if (cameraStreamId === "potato_cam") {
+    reachability = true;
+    diffScore = 95.0; // specific indicator
+    loopDetected = false;
+    verdict = "ai_generated";
+    reason = await generateAIFakeReason(store.name);
+  } else if (store.feedStatus === "offline" || cameraStreamId === "offline_cam") {
     reachability = false;
     diffScore = 0;
     verdict = "offline";
