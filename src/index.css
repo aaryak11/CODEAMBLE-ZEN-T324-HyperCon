@@ -1,0 +1,47 @@
+@import "leaflet/dist/leaflet.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  background-color: theme('colors.base');
+  color: theme('colors.ink');
+  font-family: theme('fontFamily.sans');
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Leaflet popup restyling to align with tactile brutalist design system */
+.leaflet-popup-content-wrapper {
+  background: #FFFFFF !important;
+  color: #1A1A1A !important;
+  border: 3px solid #1A1A1A !important;
+  box-shadow: 2px 2px 0 0 #1A1A1A !important;
+  border-radius: 8px !important;
+  font-family: 'Inter', sans-serif !important;
+  padding: 4px !important;
+}
+
+.leaflet-popup-tip {
+  background: #1A1A1A !important;
+  box-shadow: none !important;
+}
+
+.leaflet-container {
+  font-family: 'Inter', sans-serif !important;
+}
+
+.live-feed-scanlines {
+  position: relative;
+}
+
+.live-feed-scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px,
+      rgba(0, 0, 0, 0.04) 2px, rgba(0, 0, 0, 0.04) 4px);
+  pointer-events: none;
+  z-index: 10;
+}
