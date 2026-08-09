@@ -1,16 +1,31 @@
 {
-  "name": "hypercon-v1",
+  "name": "hypercon-client",
   "version": "1.0.0",
-  "description": "This is not a finished app. It's a real, runnable skeleton so you're not typing boilerplate on day 1 — models, routes, scoring logic, and the video pipeline wiring are done. What's missing is: your actual Mongo cluster, a real/looped camera feed, UI polish, and the map view.",
-  "main": "index.js",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "ws": "^8.21.2"
+    "@tensorflow-models/coco-ssd": "^2.2.3",
+    "@tensorflow/tfjs": "^4.22.0",
+    "hls.js": "^1.5.15",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^1.28.0",
+    "qrcode.react": "^4.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.40",
+    "tailwindcss": "^3.4.7",
+    "vite": "^5.3.4"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.62.4"
   }
 }
