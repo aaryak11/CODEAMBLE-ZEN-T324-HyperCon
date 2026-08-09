@@ -26,7 +26,8 @@ import {
   Milk,
   Wheat,
   Sprout,
-  CupSoda
+  CupSoda,
+  Store
 } from "lucide-react";
 import { ENDPOINTS } from "../config/api.js";
 
@@ -45,7 +46,7 @@ function CategoryIcon({ iconName, className = "w-6 h-6" }) {
 }
 
 export default function HomeView() {
-  const { userLocation, triggerSearch, addToCart } = useApp();
+  const { userLocation, triggerSearch, addToCart, openStoreDetail, feedStatusUpdates } = useApp();
 
   // Geolocation integration
   const { activeLocation, status: gpsStatus, requestLocation } = useGeolocation(userLocation);
@@ -475,9 +476,11 @@ export default function HomeView() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {paginatedStores.map((store) => {
+              const rtUpdate = feedStatusUpdates?.[store._id];
               const isOffline = store.feedStatus === "offline" || store.feedReliability === "offline";
               const isDelayed = store.feedStatus === "delayed" || store.feedReliability === "unreliable";
-              const reliability = store.feedReliability || (isOffline ? "offline" : isDelayed ? "unreliable" : "verified");
+              let reliability = store.feedReliability || (isOffline ? "offline" : isDelayed ? "unreliable" : "verified");
+              if (rtUpdate) reliability = rtUpdate.feedReliability;
 
               return (
                 <div
@@ -520,6 +523,11 @@ export default function HomeView() {
                             <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                             <span>FEED UNVERIFIED</span>
                           </span>
+                        ) : reliability === "ai_generated" ? (
+                          <span className="flex items-center gap-1 text-purple-700 font-mono">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            <span>AI GENERATED FAKE</span>
+                          </span>
                         ) : (
                           <span className="flex items-center gap-1 text-accent font-mono">
                             <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
@@ -540,6 +548,8 @@ export default function HomeView() {
                           ? "bg-gray-100 text-gray-500 border-gray-400 shadow-none cursor-not-allowed"
                           : reliability === "unreliable"
                           ? "bg-amber-100 hover:bg-amber-200 text-amber-950 border-amber-700"
+                          : reliability === "ai_generated"
+                          ? "bg-purple-100 hover:bg-purple-200 text-purple-950 border-purple-700"
                           : "bg-accent hover:bg-accent/90 text-surface"
                       }`}
                     >
@@ -549,14 +559,26 @@ export default function HomeView() {
                       {reliability === "unreliable" && (
                         <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                       )}
+                      {reliability === "ai_generated" && (
+                        <AlertCircle className="w-3.5 h-3.5 text-purple-700" />
+                      )}
                       <Video className="w-4 h-4" />
                       <span>
                         {reliability === "offline"
                           ? "Feed Offline"
                           : reliability === "unreliable"
                           ? "Watch Unverified Feed"
+                          : reliability === "ai_generated"
+                          ? "Watch AI Fake Stream"
                           : "Watch Camera Feed"}
                       </span>
+                    </button>
+                    <button
+                      onClick={() => openStoreDetail(store._id)}
+                      className="w-full mt-2 py-2 px-3 rounded-lg text-xs font-extrabold font-display border-2 border-ink bg-surface hover:bg-base text-ink flex items-center justify-center gap-2 transition cursor-pointer"
+                    >
+                      <Store className="w-4 h-4" />
+                      <span>View Store & Inventory</span>
                     </button>
                   </div>
                 </div>

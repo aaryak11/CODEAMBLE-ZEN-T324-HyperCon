@@ -38,11 +38,11 @@ export default function CartDrawer() {
     setShowQRModal(true);
   };
 
-  const handleQRSuccessComplete = async () => {
+  const handleQRSuccessComplete = async (paymentDetails) => {
     setShowQRModal(false);
     setIsProcessing(true);
     try {
-      const newOrder = await processCheckoutOrder();
+      const newOrder = await processCheckoutOrder(paymentDetails);
       setCompletedOrder(newOrder);
     } catch (err) {
       console.error("Checkout failed:", err);
